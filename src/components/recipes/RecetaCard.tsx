@@ -16,10 +16,28 @@ export default function RecetaCard({ receta, onSelect, onToggleFav, isFav = fals
     <Card padding="sm" className="cursor-pointer hover:border-salud-blue/30 transition-all group relative">
       <div onClick={onSelect}>
         {/* Header con categoría y dificultad */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold text-salud-blue bg-salud-blue-soft/50 px-2 py-0.5 rounded-full">
-            {getCategoriaEmoji(receta.categoria)} {getCategoriaLabel(receta.categoria)}
-          </span>
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-bold text-salud-blue bg-salud-blue-soft/50 px-2 py-0.5 rounded-full">
+              {getCategoriaEmoji(receta.categoria)} {getCategoriaLabel(receta.categoria)}
+            </span>
+            {(() => {
+              const aptaPara = receta.apta_para_condiciones || receta.aptaParaCondiciones || [];
+              if (aptaPara.length > 0 && !aptaPara.includes('General') && !aptaPara.includes('Salud General') && !aptaPara.includes('general')) {
+                return (
+                  <span className="text-[10px] font-extrabold bg-salud-red-soft text-salud-red px-2 py-0.5 rounded-full">
+                    ❤️ {aptaPara[0]}
+                  </span>
+                );
+              } else {
+                return (
+                  <span className="text-[10px] font-extrabold bg-salud-green-soft text-salud-green px-2 py-0.5 rounded-full">
+                    ✓ General
+                  </span>
+                );
+              }
+            })()}
+          </div>
           {receta.origen === 'ia' && (
             <span className="text-[10px] font-extrabold bg-gradient-to-r from-salud-blue to-salud-green text-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm animate-pulse">
               <Sparkles size={10} /> IA ✨

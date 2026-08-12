@@ -7,6 +7,7 @@ import Select from '../../components/ui/Select';
 import Card from '../../components/ui/Card';
 import Textarea from '../../components/ui/Textarea';
 import { supabase } from '../../lib/supabase';
+import { useSystemOptions } from '../../contexts/SystemOptionsContext';
 
 interface IngredienteDB {
   id: string;
@@ -30,6 +31,17 @@ interface IngredienteSeleccionado {
 
 export default function RecipeCreate() {
   const navigate = useNavigate();
+  const { getOptionsByCategory } = useSystemOptions();
+  const dbCondiciones = getOptionsByCategory('condicion');
+  
+  const fallbackCondiciones = [
+    { id: 'c1', valor: 'Diabetes (Cualquier tipo)', icono: '🩸', categoria: 'condicion', activo: true },
+    { id: 'c2', valor: 'Hipertensión', icono: '🫀', categoria: 'condicion', activo: true },
+    { id: 'c3', valor: 'Dislipidemia / Colesterol', icono: '🩸', categoria: 'condicion', activo: true },
+    { id: 'c4', valor: 'SOP (Ovarios Poliquísticos)', icono: '♀️', categoria: 'condicion', activo: true },
+  ];
+  const condicionesDinamicas = dbCondiciones.length > 0 ? dbCondiciones : fallbackCondiciones;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     nombre: '',
@@ -39,6 +51,7 @@ export default function RecipeCreate() {
     tiempoPreparacionMin: 15,
     porcionesRinde: 1,
     instruccionesText: '',
+    patologia: 'General',
   });
 
   // Estados para ingredientes
@@ -159,7 +172,7 @@ export default function RecipeCreate() {
         aptaParaDietas: [],
         cargaGlicemica: 'media'
       },
-      apta_para_condiciones: [],
+      apta_para_condiciones: form.patologia === 'General' ? ['General'] : [form.patologia],
       restricciones: [],
       tags: [],
     });
@@ -237,6 +250,17 @@ export default function RecipeCreate() {
                 <div>
                   <label className="block text-sm font-semibold mb-1 text-text-secondary">Porciones que rinde</label>
                   <Input type="number" value={form.porcionesRinde} onChange={e => setForm({...form, porcionesRinde: Number(e.target.value)})} min={1} required />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-1 text-text-secondary">Patología Recomendada</label>
+                  <Select value={form.patologia} onChange={e => setForm({...form, patologia: e.target.value})}>
+                    <option value="General">General (Sin patología específica)</option>
+                    {condicionesDinamicas.map(cond => (
+                      <option key={cond.id} value={cond.valor}>
+                        {cond.valor}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
             </Card>

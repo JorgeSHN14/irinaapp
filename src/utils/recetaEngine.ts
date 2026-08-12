@@ -133,8 +133,15 @@ export function recomendarRecetasParaPaciente(
     { sinAlergenos: evaluacion.alergias || [] }, 
     catalogo, favoritas, calificaciones
   ).filter(r => {
-    if (condiciones.length === 0) return true;
     const aptaPara = r.apta_para_condiciones || r.aptaParaCondiciones || [];
+    if (condiciones.length === 0) {
+      // Si no tiene ninguna patología, recomendar recetas generales
+      return aptaPara.length === 0 || 
+             aptaPara.includes('General') || 
+             aptaPara.includes('Salud General') || 
+             aptaPara.includes('general');
+    }
+    // Si tiene patologías, recomendar recetas indicadas para sus patologías
     return condiciones.some(c => aptaPara.includes(c));
   });
 

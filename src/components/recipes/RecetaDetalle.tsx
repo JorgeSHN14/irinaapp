@@ -22,6 +22,7 @@ export default function RecetaDetalle({ receta, onClose, onToggleFav, isFav = fa
   const alergenos = avanzados.alergenos || [];
   const vitaminas = avanzados.vitaminas || [];
   const cargaGlicemica = avanzados.carga_glicemica || avanzados.cargaGlicemica || '';
+  const aptaPara = receta.apta_para_condiciones || receta.aptaParaCondiciones || [];
   
   return (
     <div className="animate-fade-in pb-12">
@@ -166,6 +167,19 @@ export default function RecetaDetalle({ receta, onClose, onToggleFav, isFav = fa
             <Card padding="md">
               <p className="text-xs font-bold text-text-secondary mb-3 uppercase tracking-wider">Etiquetas y Clínico</p>
               <div className="flex flex-wrap gap-2">
+                {/* Patologías Recomendadas */}
+                {aptaPara && aptaPara.length > 0 && !aptaPara.includes('General') && !aptaPara.includes('Salud General') && !aptaPara.includes('general') ? (
+                  aptaPara.map((cond: string) => (
+                    <span key={cond} className="text-xs font-bold bg-salud-red-soft border border-salud-red/20 text-salud-red px-2.5 py-1 rounded-md flex items-center gap-1">
+                      ❤️ Recom. para: {cond}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs font-bold bg-salud-green-soft border border-salud-green/20 text-salud-green px-2.5 py-1 rounded-md flex items-center gap-1">
+                    ✓ Apto para: General
+                  </span>
+                )}
+
                 {/* Carga Glicémica */}
                 {cargaGlicemica && (
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${
