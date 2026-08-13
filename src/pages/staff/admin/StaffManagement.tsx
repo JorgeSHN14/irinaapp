@@ -247,79 +247,40 @@ export default function StaffManagement() {
         if (updateError) throw updateError;
         setSuccessMsg(`Usuario ${data.nombre} actualizado correctamente.`);
       } else {
-        // Intentar invocar Edge Function para registro completo en Auth + DB
-        let createdUserId: string | null = null;
-        try {
-          const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-user', {
-            body: {
-              email: data.email,
-              password: data.password,
-              nombre: data.nombre,
-              apellido: data.apellido || '',
-              role: data.role,
-              especialidad: data.especialidad || '',
-              telefono: data.telefono || '',
-            }
-          });
-
-          if (edgeError || edgeData?.error) {
-            console.warn('Edge function unavailable, fallbacking to database insert:', edgeError || edgeData?.error);
-          } else if (edgeData?.userId) {
-            createdUserId = edgeData.userId;
+        // Crear usuario via Edge Function (usa Admin API con email_confirm: true,
+        // igual que create-patient, para que el usuario pueda loguearse de inmediato con su contraseña)
+        const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: data.email,
+            password: data.password,
+            nombre: data.nombre,
+            apellido: data.apellido || '',
+            role: data.role,
+            especialidad: data.especialidad || '',
+            telefono: data.telefono || '',
           }
-        } catch (e) {
-          console.warn('Edge function invoke error:', e);
+        });
+
+        // Si la Edge Function devuelve un error en el body (ej: email ya existe)
+        if (edgeData?.error) {
+          throw new Error(edgeData.error);
         }
 
-        // Si la Edge Function no estuvo disponible, registrar en auth.users con un cliente temporal sin cerrar la sesión del admin
-        if (!createdUserId) {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-          if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('your-project')) {
-            const { createClient } = await import('@supabase/supabase-js');
-            const tempAuthClient = createClient(supabaseUrl, supabaseAnonKey, {
-              auth: { persistSession: false }
-            });
-
-            const { data: authRes, error: authErr } = await tempAuthClient.auth.signUp({
-              email: data.email,
-              password: data.password,
-              options: {
-                data: {
-                  nombre: data.nombre,
-                  apellido: data.apellido || '',
-                  role: data.role
-                }
-              }
-            });
-
-            if (authErr) throw authErr;
-            if (authRes.user?.id) {
-              createdUserId = authRes.user.id;
-            }
-          }
+        // Si hay un error de red / función no desplegada
+        if (edgeError) {
+          throw new Error(
+            `La Edge Function 'create-user' no está disponible: ${edgeError.message}. ` +
+            `Asegúrate de haber desplegado las funciones con "supabase functions deploy create-user".`
+          );
         }
 
-        // Insertar o actualizar el perfil en public.users vinculándolo con auth.users(id)
-        if (createdUserId) {
-          const { error: dbInsertError } = await supabase
-            .from('users')
-            .upsert({
-              id: createdUserId,
-              email: data.email,
-              role: data.role,
-              nombre: data.nombre,
-              apellido: data.apellido || null,
-              especialidad: data.especialidad || null,
-              telefono: data.telefono || null,
-              is_active: true,
-            });
-
-          if (dbInsertError) throw dbInsertError;
+        // La Edge Function ya creó el usuario en auth.users con email_confirm: true
+        // y también insertó el registro en public.users, no se necesita upsert adicional.
+        if (!edgeData?.userId) {
+          throw new Error('La Edge Function no devolvió un userId válido. Revisa los logs de Supabase.');
         }
 
-        setSuccessMsg(`Nuevo usuario ${data.nombre} registrado con éxito en la base de datos.`);
+        setSuccessMsg(`Nuevo usuario ${data.nombre} registrado con éxito. Ya puede iniciar sesión con su contraseña.`);
       }
 
       await fetchStaff();
