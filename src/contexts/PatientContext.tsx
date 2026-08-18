@@ -7,7 +7,7 @@ type PatientAction =
   | { type: 'SET_EVALUACION'; payload: EvaluacionInicial }
   | { type: 'SET_RESULTADOS'; payload: ResultadosMetabolicos }
   | { type: 'LOG_WATER'; payload: { fecha: string; amount?: number; exactAmount?: number } }
-  | { type: 'LOG_MEAL'; payload: { fecha: string; mealName: string; raciones: string[] } }
+  | { type: 'LOG_MEAL'; payload: { fecha: string; mealName: string; raciones: string[]; kcalConsumidas?: number; recetaId?: string; recetaNombre?: string } }
   | { type: 'LOG_HABITS'; payload: { fecha: string; habitos?: Partial<RegistroHabitos>; adherenciaPrescripciones?: any[] } }
   | { type: 'TOGGLE_FAVORITA'; payload: string }
   | { type: 'SAVE_RECETA'; payload: Receta }
@@ -49,7 +49,7 @@ function patientReducer(state: PatientState, action: PatientAction): PatientStat
       };
     }
     case 'LOG_MEAL': {
-      const { fecha, mealName, raciones } = action.payload;
+      const { fecha, mealName, raciones, kcalConsumidas, recetaId, recetaNombre } = action.payload;
       const todayLog = state.diario[fecha] || { fecha, hidratacionMl: 0, comidasRegistradas: {} };
       return {
         ...state,
@@ -62,7 +62,10 @@ function patientReducer(state: PatientState, action: PatientAction): PatientStat
               [mealName]: {
                 nombreComida: mealName,
                 racionesConsumidas: raciones,
-                completado: true
+                completado: true,
+                kcalConsumidas,
+                recetaSeleccionadaId: recetaId,
+                recetaSeleccionadaNombre: recetaNombre,
               }
             }
           }

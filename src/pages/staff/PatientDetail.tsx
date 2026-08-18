@@ -4,9 +4,9 @@ import { supabase } from '../../lib/supabase';
 import {
   ArrowLeft, Edit, FileText, Activity, AlertTriangle,
   Calendar, Scale, Droplets, Target, User, HeartPulse, Pill, TrendingUp, Table,
-  PlayCircle, Plus, Trash2, Video
+  PlayCircle, Plus, Trash2, Video, Flame, UtensilsCrossed
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useStaff } from '../../contexts/StaffContext';
 import Avatar from '../../components/ui/Avatar';
 import Badge from '../../components/ui/Badge';
@@ -490,6 +490,7 @@ export default function PatientDetail() {
             onChange={setActiveTab}
             tabs={[
               { id: 'plan', label: 'Plan Actual', icon: <Target size={16} /> },
+              { id: 'nutricion', label: 'Nutrición', icon: <Flame size={16} /> },
               { id: 'evolucion', label: 'Evolución', icon: <TrendingUp size={16} /> },
               { id: 'historial', label: 'Historial Clínico', icon: <Activity size={16} />, badge: evaluations.length }
             ]}
@@ -676,6 +677,168 @@ export default function PatientDetail() {
               )}
             </Card>
           )}
+
+          {/* TAB NUTRICIÓN */}
+          {activeTab === 'nutricion' && (() => {
+            const objetivoKcal = patient.resultadosActuales?.get || 0;
+            const margenKcal = objetivoKcal * 0.05;
+
+            // Datos de los últimos 7 días para este paciente
+            const nutricionData = Array.from({ length: 7 }).map((_, i) => {
+              const d = new Date();
+              d.setDate(d.getDate() - (6 - i));
+              const dateStr = d.toISOString().split('T')[0];
+              const diaStr = d.toLocaleDateString('es-MX', { weekday: 'short' });
+              const log = patientState?.diario?.[dateStr];
+              const kcal = log?.comidasRegistradas
+                ? Object.values(log.comidasRegistradas as Record<string, any>).reduce((acc: number, c: any) => acc + (c.kcalConsumidas || 0), 0)
+                : 0;
+              const comidas = log?.comidasRegistradas ? Object.keys(log.comidasRegistradas).length : 0;
+              const dentroObjetivo = kcal > 0 && kcal >= objetivoKcal - margenKcal && kcal <= objetivoKcal + margenKcal;
+              const excede = kcal > objetivoKcal + margenKcal;
+              return { fecha: dateStr, dia: diaStr.charAt(0).toUpperCase() + diaStr.slice(1), kcal, comidas, dentroObjetivo, excede, log };
+            });
+
+            const diasConRegistro = nutricionData.filter(d => d.kcal > 0);
+            const diasEnObjetivo = nutricionData.filter(d => d.dentroObjetivo).length;
+            const adherenciaPct = diasConRegistro.length > 0 ? Math.round((diasEnObjetivo / diasConRegistro.length) * 100) : 0;
+
+            return (
+              <div className="space-y-4 animate-fade-in">
+                {/* Resumen rápido */}
+                {!patient.resultadosActuales && (
+                  <EmptyState
+                    title="Sin plan nutricional activo"
+                    description="Este paciente aún no tiene un plan calórico asignado. Realiza una evaluación primero."
+                    action={<Button size="sm" icon={<FileText size={16} />} onClick={() => navigate(`/staff/pacientes/${patient.id}/evaluar`)}>Crear Evaluación</Button>}
+                  />
+                )}
+
+                {patient.resultadosActuales && (
+                  <>
+                    {/* KPIs */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <Card padding="sm" className="text-center">
+                        <p className="text-xs text-text-secondary mb-1">Objetivo Diario</p>
+                        <p className="text-lg font-extrabold text-salud-blue">{Math.round(objetivoKcal)}</p>
+                        <p className="text-xs text-text-tertiary">kcal / día</p>
+                      </Card>
+                      <Card padding="sm" className="text-center">
+                        <p className="text-xs text-text-secondary mb-1">Adherencia</p>
+                        <p className={`text-lg font-extrabold ${adherenciaPct >= 80 ? 'text-salud-green' : adherenciaPct >= 50 ? 'text-salud-amber' : 'text-salud-red'}`}>
+                          {diasConRegistro.length > 0 ? `${adherenciaPct}%` : '—'}
+                        </p>
+                        <p className="text-xs text-text-tertiary">calórica 7 días</p>
+                      </Card>
+                      <Card padding="sm" className="text-center">
+                        <p className="text-xs text-text-secondary mb-1">Días en objetivo</p>
+                        <p className="text-lg font-extrabold text-text-primary">{diasEnObjetivo} / 7</p>
+                        <p className="text-xs text-text-tertiary">±5% margen</p>
+                      </Card>
+                    </div>
+
+                    {/* Gráfico de consumo calórico */}
+                    <Card padding="md">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Flame size={16} className="text-salud-amber" />
+                        <h3 className="font-bold text-text-primary text-sm">Consumo Calórico vs Objetivo (7 días)</h3>
+                      </div>
+                      <div className="h-[200px] -ml-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={nutricionData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                            <XAxis dataKey="dia" tick={{ fill: '#6B7280', fontSize: 11 }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fill: '#6B7280', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
+                            <RechartsTooltip
+                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                              formatter={(val: any) => [`${Math.round(val)} kcal`, 'Consumido']}
+                            />
+                            {objetivoKcal > 0 && (
+                              <ReferenceLine y={objetivoKcal} stroke="#2563EB" strokeDasharray="5 3" strokeWidth={2}
+                                label={{ value: 'Objetivo', position: 'insideTopRight', fontSize: 10, fill: '#2563EB', fontWeight: 700 }}
+                              />
+                            )}
+                            {objetivoKcal > 0 && <ReferenceLine y={objetivoKcal + margenKcal} stroke="#10B981" strokeDasharray="3 3" strokeWidth={1} />}
+                            {objetivoKcal > 0 && <ReferenceLine y={Math.max(0, objetivoKcal - margenKcal)} stroke="#10B981" strokeDasharray="3 3" strokeWidth={1} />}
+                            <Bar dataKey="kcal" radius={[5, 5, 0, 0]} maxBarSize={36}>
+                              {nutricionData.map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={entry.kcal === 0 ? '#E5E7EB' : entry.excede ? '#EF4444' : entry.dentroObjetivo ? '#10B981' : '#3B82F6'}
+                                  fillOpacity={entry.kcal === 0 ? 0.4 : 0.85}
+                                />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex flex-wrap gap-3 mt-1 text-[10px] text-text-tertiary font-semibold">
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-salud-green inline-block" />En objetivo (±5%)</span>
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-salud-blue inline-block" />Por debajo</span>
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-salud-red inline-block" />Excede</span>
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-border inline-block opacity-60" />Sin registro</span>
+                      </div>
+                    </Card>
+
+                    {/* Detalle diario */}
+                    <Card padding="md">
+                      <div className="flex items-center gap-2 mb-3">
+                        <UtensilsCrossed size={16} className="text-salud-green" />
+                        <h3 className="font-bold text-text-primary text-sm">Detalle Diario de Comidas</h3>
+                      </div>
+                      <div className="space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                        {[...nutricionData].reverse().map(d => {
+                          if (d.comidas === 0 && d.kcal === 0) return (
+                            <div key={d.fecha} className="flex items-center justify-between py-2 px-3 rounded-xl bg-bg-elevated/40 border border-border/30">
+                              <span className="text-xs font-semibold text-text-tertiary capitalize">{d.dia} {new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</span>
+                              <Badge>Sin registro</Badge>
+                            </div>
+                          );
+                          const log = patientState?.diario?.[d.fecha];
+                          const comidaEntries = log?.comidasRegistradas ? Object.values(log.comidasRegistradas as Record<string, any>) : [];
+                          return (
+                            <div key={d.fecha} className="rounded-xl border border-border/40 bg-bg-elevated/50 p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs font-bold text-text-primary capitalize">{d.dia} {new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</p>
+                                <div className="flex items-center gap-2">
+                                  {d.kcal > 0 && (
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                      d.dentroObjetivo ? 'bg-salud-green-soft/30 text-salud-green' :
+                                      d.excede ? 'bg-salud-red-soft/30 text-salud-red' :
+                                      'bg-salud-blue-soft/20 text-salud-blue'
+                                    }`}>
+                                      {Math.round(d.kcal)} kcal
+                                    </span>
+                                  )}
+                                  <span className="text-[11px] text-text-tertiary">{d.comidas} comida{d.comidas !== 1 ? 's' : ''}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                {comidaEntries.map((comida: any, i: number) => (
+                                  <div key={i} className="flex items-center justify-between text-[11px]">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-salud-green" />
+                                      <span className="font-semibold text-text-secondary">{comida.nombreComida}</span>
+                                      {comida.recetaSeleccionadaNombre && (
+                                        <span className="text-text-tertiary">· {comida.recetaSeleccionadaNombre}</span>
+                                      )}
+                                    </div>
+                                    {comida.kcalConsumidas > 0 && (
+                                      <span className="font-bold text-text-secondary">{Math.round(comida.kcalConsumidas)} kcal</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {/* TAB 2: EVOLUCION */}
           {activeTab === 'evolucion' && (

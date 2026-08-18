@@ -199,6 +199,9 @@ export interface RegistroConsumo {
   nombreComida: string; // ej. "Desayuno"
   racionesConsumidas: string[]; // array de smae_id
   completado: boolean;
+  kcalConsumidas?: number;           // kcal aportadas por la receta seleccionada
+  recetaSeleccionadaId?: string;     // id de la receta elegida
+  recetaSeleccionadaNombre?: string; // nombre de la receta para mostrar en historial
 }
 
 export interface DailyLog {

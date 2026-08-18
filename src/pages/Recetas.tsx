@@ -25,8 +25,9 @@ export default function Recetas() {
   const { evaluacion, resultados } = state;
   const { generatedRecipes, removeGeneratedRecipe } = useRecipeStore();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const categoriaFromUrl = searchParams.get('categoria') as CategoriaReceta | null;
+  const recetaFromUrl = searchParams.get('receta');
 
   const [vistaActiva, setVistaActiva] = useState<'recetario' | 'ia'>('recetario');
   const [filtros, setFiltros] = useState<FiltrosReceta>({});
@@ -70,6 +71,15 @@ export default function Recetas() {
     const sysFiltered = catalogo.filter(r => !genIds.has(r.id));
     return [...generatedRecipes, ...sysFiltered];
   }, [generatedRecipes, catalogo]);
+
+  useEffect(() => {
+    if (recetaFromUrl && catalogoUnificado.length > 0 && !recetaSeleccionada) {
+      const found = catalogoUnificado.find(r => r.id === recetaFromUrl);
+      if (found) {
+        setRecetaSeleccionada(found);
+      }
+    }
+  }, [recetaFromUrl, catalogoUnificado, recetaSeleccionada]);
 
   const filtrosActivos = useMemo(() => {
     let count = 0;
@@ -146,7 +156,15 @@ export default function Recetas() {
       <div className="animate-fade-in">
         <RecetaDetalle
           receta={recetaSeleccionada}
-          onClose={() => setRecetaSeleccionada(null)}
+          onClose={() => {
+            setRecetaSeleccionada(null);
+            // Si veníamos de la URL con receta, quitamos el param al cerrar para que no se reabra
+            if (recetaFromUrl) {
+              const newParams = new URLSearchParams(searchParams);
+              newParams.delete('receta');
+              setSearchParams(newParams, { replace: true });
+            }
+          }}
           onToggleFav={() => handleToggleFav(recetaSeleccionada.id)}
           isFav={state.recetasFavoritas.includes(recetaSeleccionada.id)}
           onRate={(r) => handleRate(recetaSeleccionada.id, r)}
