@@ -52,6 +52,7 @@ export default function PatientDetail() {
   const [planForm, setPlanForm] = useState({
     get: 0,
     pctProteina: 30,
+    coefProteina: 1,
     pctGrasa: 25,
     pctCarbs: 45,
     metaHidratacionMl: 2000,
@@ -524,9 +525,20 @@ export default function PatientDetail() {
                           const pctProt = Math.round((r.macros.proteinas.kcal / totalKcal) * 100);
                           const pctGrasa = Math.round((r.macros.grasas.kcal / totalKcal) * 100);
                           const pctCarbs = Math.round((r.macros.carbohidratos.kcal / totalKcal) * 100);
+
+                          let coefProt = 1;
+                          if (patient.pesoKg > 0) {
+                            coefProt = Number((r.macros.proteinas.gramos / patient.pesoKg).toFixed(1));
+                            const options = [1, 1.2, 1.5, 2];
+                            if (!options.includes(coefProt)) {
+                              coefProt = options.reduce((prev, curr) => Math.abs(curr - coefProt) < Math.abs(prev - coefProt) ? curr : prev);
+                            }
+                          }
+
                           setPlanForm({
                             get: Math.round(r.get),
                             pctProteina: pctProt,
+                            coefProteina: coefProt,
                             pctGrasa: pctGrasa,
                             pctCarbs: pctCarbs,
                             metaHidratacionMl: r.metaHidratacionMl,
@@ -1091,7 +1103,14 @@ export default function PatientDetail() {
                       min={800}
                       max={5000}
                       value={planForm.get}
-                      onChange={e => setPlanForm(f => ({ ...f, get: Number(e.target.value) }))}
+                      onChange={e => {
+                        const newGet = Number(e.target.value);
+                        setPlanForm(f => {
+                          const newPctProteina = newGet > 0 ? ((patient.pesoKg * f.coefProteina) * 4 / newGet) * 100 : 0;
+                          const newPctCarbs = 100 - newPctProteina - f.pctGrasa;
+                          return { ...f, get: newGet, pctProteina: newPctProteina, pctCarbs: newPctCarbs };
+                        });
+                      }}
                       rightElement={<span className="text-xs text-text-tertiary">kcal/día</span>}
                     />
                   </div>
@@ -1105,17 +1124,22 @@ export default function PatientDetail() {
                     {/* Proteína */}
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold text-salud-blue w-24 shrink-0">Proteína (g)</span>
-                      <input
-                        type="number" min={0} step={1}
-                        value={Math.round((planForm.get * planForm.pctProteina / 100) / 4)}
+                      <select
+                        value={planForm.coefProteina}
                         onChange={e => {
-                          const g = Number(e.target.value);
+                          const coef = Number(e.target.value);
+                          const g = patient.pesoKg * coef;
                           const pct = planForm.get > 0 ? (g * 4 / planForm.get) * 100 : 0;
                           const remaining = 100 - pct - planForm.pctGrasa;
-                          setPlanForm(f => ({ ...f, pctProteina: pct, pctCarbs: remaining }));
+                          setPlanForm(f => ({ ...f, pctProteina: pct, pctCarbs: remaining, coefProteina: coef }));
                         }}
                         className="flex-1 max-w-[140px] bg-bg-elevated border border-border/60 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-semibold text-text-primary outline-none focus:border-salud-blue transition-colors"
-                      />
+                      >
+                        <option value="1">1.0 g/kg ({Math.round(patient.pesoKg * 1)}g)</option>
+                        <option value="1.2">1.2 g/kg ({Math.round(patient.pesoKg * 1.2)}g)</option>
+                        <option value="1.5">1.5 g/kg ({Math.round(patient.pesoKg * 1.5)}g)</option>
+                        <option value="2">2.0 g/kg ({Math.round(patient.pesoKg * 2)}g)</option>
+                      </select>
                       <div className="flex-1" />
                       <span className="text-sm font-bold text-salud-blue w-16 text-right">
                         {Math.round(planForm.pctProteina)}%

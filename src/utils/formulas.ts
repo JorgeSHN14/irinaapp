@@ -70,11 +70,7 @@ export const calcularResultados = (datos: EvaluacionInicial): ResultadosMetaboli
   }
 
   // 4. Desglose de Macronutrientes (Lógica de Cascada Obligatoria)
-  // Prevención de Sarcopenia para Adultos Mayores
-  let factorProteina = 1.2;
-  if (edad >= 65 && (condiciones.includes('Osteoporosis/artrosis') || datos.objetivo.includes('ganar_masa') || condiciones.includes('Lesión muscular'))) {
-    factorProteina = 1.5;
-  }
+  let factorProteina = 1;
   
   const gramosProteina = pesoKg * factorProteina;
   const kcalProteina = gramosProteina * 4;
