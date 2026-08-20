@@ -46,7 +46,7 @@ export interface UpdatePatientData {
   cinturaCm: number;
   caderaCm: number;
   condiciones: import('../types').CondicionMedica[];
-  objetivo: import('../types').Objetivo;
+  objetivo: string[];
   nivelActividad: import('../types').NivelActividad;
   estatus: PatientStatus;
 }
@@ -134,7 +134,7 @@ function mapDatabasePatient(p: any): Patient {
     composicionCorporal: p.composicion_corporal,
     laboratorios: p.laboratorios,
     nivelActividad: p.nivel_actividad,
-    objetivo: p.objetivo,
+    objetivo: Array.isArray(p.objetivo) ? p.objetivo : (p.objetivo ? [p.objetivo] : []),
     condiciones: p.condiciones || [],
     resultadosActuales: p.resultados_actuales,
     rutinaVideoUrl: p.rutina_video_url || undefined,
@@ -161,7 +161,7 @@ function mapDatabaseEvaluation(e: any): Evaluacion {
     caderaCm: e.cadera_cm,
     composicionCorporal: e.composicion_corporal,
     nivelActividad: e.nivel_actividad,
-    objetivo: e.objetivo,
+    objetivo: Array.isArray(e.objetivo) ? e.objetivo : (e.objetivo ? [e.objetivo] : []),
     condiciones: e.condiciones || [],
     laboratorios: e.laboratorios || undefined,
     medicamentos: e.medicamentos || [],

@@ -10,7 +10,7 @@ import StepPersonal from '../../components/wizard/StepPersonal';
 import StepClinico from '../../components/wizard/StepClinico';
 import StepFarmacos from '../../components/wizard/StepFarmacos';
 import StepObjetivo from '../../components/wizard/StepObjetivo';
-import type { CondicionMedica, NivelActividad, Objetivo, Sexo } from '../../types';
+import type { CondicionMedica, NivelActividad, Sexo } from '../../types';
 import type { CreatePatientData } from '../../types/patients';
 
 // =============================================
@@ -46,7 +46,7 @@ export default function PatientCreate() {
     medicamentos: [],
     medicamentosActuales: '',
     restriccionesFisicas: [],
-    objetivo: '' as Objetivo, // Coerced for initial empty state
+    objetivo: [], // Inicialmente vacío
     nivelActividad: 0 as NivelActividad, // Coerced for initial empty state
     apoyoFamiliar: false,
     motivacion: '',
@@ -103,7 +103,7 @@ export default function PatientCreate() {
 
   const isStep3Valid = true; // Opcional
 
-  const isStep4Valid = form.objetivo !== '' as Objetivo && form.nivelActividad > 0;
+  const isStep4Valid = form.objetivo.length > 0 && form.nivelActividad > 0;
 
   const canProceed = [isStep1Valid, isStep2Valid, isStep3Valid, isStep4Valid][step - 1];
 

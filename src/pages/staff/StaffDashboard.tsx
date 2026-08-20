@@ -27,13 +27,16 @@ export default function StaffDashboard() {
     return 'Buenas noches';
   };
 
-  const getObjetivoLabel = (obj: string) => {
+  const getObjetivoLabel = (obj: string | string[]) => {
     const map: Record<string, string> = {
       mantener: 'Mantener peso',
       perder_grasa: 'Perder grasa',
       ganar_masa: 'Ganar masa',
     };
-    return map[obj] || obj;
+    if (Array.isArray(obj)) {
+      return obj.length > 0 ? obj.map(o => map[o] || o).join(', ') : 'Sin objetivo';
+    }
+    return map[obj as string] || obj || 'Sin objetivo';
   };
 
   const getStatusBadge = (estatus: string) => {

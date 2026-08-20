@@ -9,7 +9,7 @@ import StepFarmacos from '../components/wizard/StepFarmacos';
 import StepObjetivo from '../components/wizard/StepObjetivo';
 import { calcularResultados } from '../utils/formulas';
 import { usePatient } from '../App';
-import type { CondicionMedica, NivelActividad, Objetivo, Sexo, ComposicionCorporal } from '../types';
+import type { CondicionMedica, NivelActividad, Sexo, ComposicionCorporal } from '../types';
 
 interface FormData {
   nombre: string;
@@ -30,7 +30,7 @@ interface FormData {
   alergias?: string[];
   apoyoFamiliar: boolean;
   motivacion: string;
-  objetivo: Objetivo | '';
+  objetivo: string[];
   nivelActividad: NivelActividad | 0;
 }
 
@@ -58,7 +58,7 @@ export default function Onboarding() {
     restriccionesFisicas: [],
     apoyoFamiliar: false,
     motivacion: '',
-    objetivo: '',
+    objetivo: [],
     nivelActividad: 0,
   });
 
@@ -115,7 +115,7 @@ export default function Onboarding() {
 
   const isStep3Valid = true; // Opcional
 
-  const isStep4Valid = form.objetivo !== '' && form.nivelActividad > 0 && form.motivacion.trim().length > 0;
+  const isStep4Valid = form.objetivo.length > 0 && form.nivelActividad > 0 && form.motivacion.trim().length > 0;
 
   const canProceed = [isStep1Valid, isStep2Valid, isStep3Valid, isStep4Valid][step - 1];
 
@@ -139,7 +139,7 @@ export default function Onboarding() {
       nivelActividad: form.nivelActividad as NivelActividad,
       circunferenciaCinturaCm: form.circunferenciaCinturaCm,
       circunferenciaCaderaCm: form.circunferenciaCaderaCm,
-      objetivo: form.objetivo as Objetivo,
+      objetivo: form.objetivo,
       condiciones: form.condiciones.filter((c) => c !== 'ninguno'),
       laboratorios: form.laboratorios,
       medicamentos: form.medicamentos,

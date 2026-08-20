@@ -11,7 +11,7 @@ import Avatar from '../../components/ui/Avatar';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
-import type { NivelActividad, Objetivo, EvaluacionInicial } from '../../types/index';
+import type { NivelActividad, EvaluacionInicial } from '../../types/index';
 import type { Evaluacion } from '../../types/patients';
 import { useSystemOptions } from '../../contexts/SystemOptionsContext';
 import { calcularHomaIr } from '../../utils/formulas';
@@ -35,7 +35,7 @@ export default function PatientEvaluate() {
     cinturaCm: 0,
     caderaCm: 0,
     nivelActividad: 1 as NivelActividad,
-    objetivo: 'mantener' as Objetivo,
+    objetivo: [],
     nivelEnergia: 5,
     calidadDigestion: 'buena',
     nivelAnsiedad: 'ninguna',
@@ -117,7 +117,7 @@ export default function PatientEvaluate() {
     setIsSubmitting(true);
     try {
       // Validar datos mínimos
-      if (!form.pesoKg || !form.cinturaCm || !form.nivelActividad || !form.objetivo) {
+      if (!form.pesoKg || !form.cinturaCm || !form.nivelActividad || !form.objetivo || form.objetivo.length === 0) {
         alert('Por favor completa los campos requeridos marcados con *');
         setIsSubmitting(false);
         return;
@@ -442,9 +442,16 @@ export default function PatientEvaluate() {
                 {getOptionsByCategory('objetivo').map((obj) => (
                   <button
                     key={obj.id}
-                    onClick={() => updateField('objetivo', obj.valor)}
+                    onClick={() => {
+                      const current = form.objetivo || [];
+                      if (current.includes(obj.valor)) {
+                        updateField('objetivo', current.filter(o => o !== obj.valor));
+                      } else {
+                        updateField('objetivo', [...current, obj.valor]);
+                      }
+                    }}
                     className={`py-2 px-3 text-xs font-bold rounded-[var(--radius-sm)] border-2 transition-colors ${
-                      form.objetivo === obj.valor
+                      form.objetivo?.includes(obj.valor)
                         ? 'border-salud-green bg-salud-green-soft text-salud-green'
                         : 'border-border bg-bg-primary text-text-secondary hover:border-salud-green/40'
                     }`}

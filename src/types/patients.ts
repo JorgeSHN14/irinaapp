@@ -3,7 +3,7 @@
 // Modelo de datos para gestión clínica
 // =============================================
 
-import type { CondicionMedica, NivelActividad, Objetivo, ResultadosMetabolicos, Sexo, ComposicionCorporal } from './index';
+import type { CondicionMedica, NivelActividad, Sexo, ComposicionCorporal, ResultadosMetabolicos } from './index';
 
 /** Infografía médica individual para el paciente */
 export interface Infografia {
@@ -52,7 +52,7 @@ export interface Patient {
     perfilLipidico?: string;
   };
   nivelActividad: NivelActividad;
-  objetivo: Objetivo;
+  objetivo: string[];
   condiciones: CondicionMedica[];
   
   // Resultados metabólicos actuales
@@ -81,7 +81,7 @@ export interface PatientListItem {
   edad: number;
   sexo: Sexo;
   estatus: PatientStatus;
-  objetivo: Objetivo;
+  objetivo: string[];
   condiciones: CondicionMedica[];
   imc?: number;
   clasificacionImc?: string;
@@ -128,7 +128,7 @@ export interface CreatePatientData {
   restriccionesFisicas: string[];
   
   // Objetivos
-  objetivo: Objetivo;
+  objetivo: string[];
   nivelActividad: NivelActividad;
   apoyoFamiliar: boolean;
   motivacion: string;
@@ -149,7 +149,7 @@ export interface Evaluacion {
   caderaCm: number;
   composicionCorporal?: ComposicionCorporal;
   nivelActividad: NivelActividad;
-  objetivo: Objetivo;
+  objetivo: string[];
   
   // Clínico
   condiciones: CondicionMedica[];
@@ -185,7 +185,7 @@ export interface PatientFilters {
   busqueda?: string;
   estatus?: PatientStatus;
   condicion?: CondicionMedica;
-  objetivo?: Objetivo;
+  objetivo?: string[];
   assignedTo?: string;
 }
 

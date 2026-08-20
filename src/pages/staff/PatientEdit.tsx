@@ -18,7 +18,7 @@ import StepPersonal from '../../components/wizard/StepPersonal';
 import StepClinico from '../../components/wizard/StepClinico';
 import StepObjetivo from '../../components/wizard/StepObjetivo';
 import EmptyState from '../../components/ui/EmptyState';
-import type { CondicionMedica, NivelActividad, Objetivo, Sexo } from '../../types';
+import type { CondicionMedica, NivelActividad, Sexo } from '../../types';
 import type { PatientStatus } from '../../types/patients';
 
 // =============================================
@@ -122,7 +122,7 @@ export default function PatientEdit() {
   const isStep2Valid = form ? form.condiciones.length > 0 : false;
 
   const isStep3Valid = form
-    ? (form.objetivo as string) !== '' && form.nivelActividad > 0
+    ? form.objetivo.length > 0 && form.nivelActividad > 0
     : false;
 
   const canProceed = [isStep1Valid, isStep2Valid, isStep3Valid][step - 1];
@@ -156,7 +156,7 @@ export default function PatientEdit() {
         cinturaCm: form.cinturaCm,
         caderaCm: form.caderaCm,
         condiciones: form.condiciones as CondicionMedica[],
-        objetivo: form.objetivo as Objetivo,
+        objetivo: form.objetivo,
         nivelActividad: form.nivelActividad as NivelActividad,
         estatus: form.estatus as PatientStatus,
       };
@@ -326,7 +326,7 @@ export default function PatientEdit() {
                 </h2>
               </div>
               <StepObjetivo
-                objetivo={form.objetivo as Objetivo}
+                objetivo={form.objetivo}
                 nivelActividad={form.nivelActividad as NivelActividad}
                 motivacion={''}
                 apoyoFamiliar={false}

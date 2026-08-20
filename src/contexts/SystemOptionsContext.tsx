@@ -21,7 +21,6 @@ export function SystemOptionsProvider({ children }: { children: React.ReactNode 
     const { data, error } = await supabase
       .from('system_options')
       .select('*')
-      .eq('activo', true)
       .order('created_at', { ascending: true });
 
     if (!error && data) {
@@ -50,8 +49,8 @@ export function SystemOptionsProvider({ children }: { children: React.ReactNode 
     };
   }, []);
 
-  const getOptionsByCategory = (categoria: SystemOption['categoria']) => {
-    return options.filter(o => o.categoria === categoria);
+  const getOptionsByCategory = (categoria: SystemOption['categoria'], includeInactive = false) => {
+    return options.filter(o => o.categoria === categoria && (includeInactive || o.activo));
   };
 
   return (

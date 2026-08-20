@@ -554,7 +554,12 @@ export default function Perfil() {
             </div>
             <div>
               <p className="text-xs text-text-tertiary font-medium">Objetivo</p>
-              <p className="text-sm font-bold text-text-primary capitalize">{evaluacion.objetivo.replace('_', ' ')}</p>
+              <p className="text-sm font-bold text-text-primary capitalize">
+                {(Array.isArray(evaluacion.objetivo as unknown)
+                  ? (evaluacion.objetivo as unknown as string[])
+                  : [evaluacion.objetivo as unknown as string]
+                ).map(o => String(o).replace(/_/g, ' ')).join(', ')}
+              </p>
             </div>
             <div className="col-span-2">
               <p className="text-xs text-text-tertiary font-medium">Condiciones</p>

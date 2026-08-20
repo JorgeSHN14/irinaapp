@@ -1,15 +1,15 @@
 import { Target, TrendingDown, TrendingUp, Armchair, Footprints, Bike, Dumbbell, Flame } from 'lucide-react';
 import Input from '../ui/Input';
-import type { NivelActividad, Objetivo, SystemOption } from '../../types';
+import type { NivelActividad, SystemOption } from '../../types';
 import { NIVELES_ACTIVIDAD } from '../../utils/constants';
 import { useSystemOptions } from '../../contexts/SystemOptionsContext';
 
 interface StepObjetivoProps {
-  objetivo: Objetivo | '';
+  objetivo: string[];
   nivelActividad: NivelActividad | 0;
   motivacion: string;
   apoyoFamiliar: boolean;
-  onUpdate: (field: string, value: string | number | boolean) => void;
+  onUpdate: (field: string, value: any) => void;
 }
 
 
@@ -47,16 +47,24 @@ export default function StepObjetivo({ objetivo, nivelActividad, motivacion, apo
         </label>
         <div className="space-y-3">
           {objetivosDinamicos.map((opcion) => {
-            const isActive = objetivo === opcion.valor;
+            const isActive = objetivo.includes(opcion.valor);
             const fallbackIcon = opcion.valor.toLowerCase().includes('perder') ? TrendingDown : 
                                  opcion.valor.toLowerCase().includes('ganar') ? TrendingUp : Target;
             const Icon = fallbackIcon;
+            
+            const handleToggle = () => {
+              if (isActive) {
+                onUpdate('objetivo', objetivo.filter(o => o !== opcion.valor));
+              } else {
+                onUpdate('objetivo', [...objetivo, opcion.valor]);
+              }
+            };
             
             return (
               <button
                 key={opcion.id}
                 type="button"
-                onClick={() => onUpdate('objetivo', opcion.valor)}
+                onClick={handleToggle}
                 className={`
                   w-full flex items-center gap-4 p-4
                   rounded-[var(--radius-lg)] border-2

@@ -1788,7 +1788,7 @@ export default function PatientDetail() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-bg-elevated p-3 rounded-lg border border-border/40">
                   <p className="text-xs text-text-secondary mb-0.5">Objetivo</p>
-                  <p className="text-sm font-bold text-text-primary capitalize">{selectedEvaluation.objetivo}</p>
+                  <p className="text-sm font-bold text-text-primary capitalize">{Array.isArray(selectedEvaluation.objetivo) ? selectedEvaluation.objetivo.join(', ') : selectedEvaluation.objetivo}</p>
                 </div>
                 <div className="bg-bg-elevated p-3 rounded-lg border border-border/40">
                   <p className="text-xs text-text-secondary mb-0.5">Nivel Actividad</p>

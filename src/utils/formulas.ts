@@ -63,16 +63,16 @@ export const calcularResultados = (datos: EvaluacionInicial): ResultadosMetaboli
   let get = tmb * factorActividad * factorEstres;
 
   // Ajuste de GET según el Objetivo
-  if (datos.objetivo === 'perder_grasa') {
+  if (datos.objetivo.includes('perder_grasa')) {
     get -= 500; // Déficit calórico
-  } else if (datos.objetivo === 'ganar_masa') {
+  } else if (datos.objetivo.includes('ganar_masa')) {
     get += 500; // Superávit calórico
   }
 
   // 4. Desglose de Macronutrientes (Lógica de Cascada Obligatoria)
   // Prevención de Sarcopenia para Adultos Mayores
   let factorProteina = 1.2;
-  if (edad >= 65 && (condiciones.includes('Osteoporosis/artrosis') || datos.objetivo === 'ganar_masa' || condiciones.includes('Lesión muscular'))) {
+  if (edad >= 65 && (condiciones.includes('Osteoporosis/artrosis') || datos.objetivo.includes('ganar_masa') || condiciones.includes('Lesión muscular'))) {
     factorProteina = 1.5;
   }
   

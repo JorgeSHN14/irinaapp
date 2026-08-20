@@ -70,7 +70,7 @@ export interface EvaluacionInicial {
   circunferenciaCaderaCm: number;
   porcentajeGrasaOpcional?: number;
   composicionCorporal?: ComposicionCorporal;
-  objetivo: Objetivo;
+  objetivo: string[];
   condiciones: CondicionMedica[];
   medicamentosActuales?: string;
   // Clínico Avanzado

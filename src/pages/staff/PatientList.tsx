@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Users, Eye, Edit, Trash2, Activity } from 'lucide-react';
+import { UserPlus, Users, Eye, Edit, Trash2, Activity, Settings2 } from 'lucide-react';
 import { useStaff } from '../../contexts/StaffContext';
 import DataTable, { type Column } from '../../components/ui/DataTable';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Avatar from '../../components/ui/Avatar';
+import ObjetivosManager from '../../components/staff/ObjetivosManager';
 import type { PatientListItem } from '../../types/patients';
 
 // =============================================
@@ -15,6 +17,7 @@ export default function PatientList() {
   const navigate = useNavigate();
   const { getPatientList } = useStaff();
   const patients = getPatientList();
+  const [showObjetivosManager, setShowObjetivosManager] = useState(false);
 
   const getStatusBadge = (estatus: string) => {
     switch (estatus) {
@@ -25,13 +28,16 @@ export default function PatientList() {
     }
   };
 
-  const getObjetivoLabel = (obj: string) => {
+  const getObjetivoLabel = (obj: string | string[]) => {
     const map: Record<string, string> = {
       mantener: 'Mantener peso',
       perder_grasa: 'Perder grasa',
       ganar_masa: 'Ganar masa',
     };
-    return map[obj] || obj;
+    if (Array.isArray(obj)) {
+      return obj.length > 0 ? obj.map(o => map[o] || o).join(', ') : 'Sin objetivo';
+    }
+    return map[obj as string] || obj || 'Sin objetivo';
   };
 
   const columns: Column<PatientListItem>[] = [
@@ -142,13 +148,23 @@ export default function PatientList() {
             Gestiona la atención nutricional de todos tus pacientes.
           </p>
         </div>
-        <Button
-          onClick={() => navigate('/staff/pacientes/nuevo')}
-          icon={<UserPlus size={18} />}
-          size="md"
-        >
-          Nuevo Paciente
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={() => setShowObjetivosManager(true)}
+            icon={<Settings2 size={18} />}
+            size="md"
+          >
+            Parámetros
+          </Button>
+          <Button
+            onClick={() => navigate('/staff/pacientes/nuevo')}
+            icon={<UserPlus size={18} />}
+            size="md"
+          >
+            Nuevo Paciente
+          </Button>
+        </div>
       </div>
 
       {/* DataTable */}
@@ -178,6 +194,11 @@ export default function PatientList() {
             </Button>
           </div>
         }
+      />
+      
+      <ObjetivosManager 
+        isOpen={showObjetivosManager} 
+        onClose={() => setShowObjetivosManager(false)} 
       />
     </div>
   );
